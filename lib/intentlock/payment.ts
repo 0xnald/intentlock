@@ -3,7 +3,7 @@ import type { NextRequest, NextResponse } from "next/server";
 import { withX402 } from "@okxweb3/x402-next";
 import { x402ResourceServer } from "@okxweb3/x402-next";
 import { ExactEvmScheme } from "@okxweb3/x402-evm/exact/server";
-import { NETWORK, PAY_TO, PRICE_USD } from "./config";
+import { NETWORK, PAY_TO, PRICE_AMOUNT, PRICE_USD, SETTLEMENT_ASSET } from "./config";
 
 function requiredEnv(name: string) {
   const value = process.env[name];
@@ -30,7 +30,10 @@ export const paidToolRoute = {
     scheme: "exact",
     network: NETWORK,
     payTo: PAY_TO,
-    price: `$${PRICE_USD}`,
+    price: {
+      amount: PRICE_AMOUNT,
+      asset: SETTLEMENT_ASSET
+    },
     maxTimeoutSeconds: 300,
     extra: {
       name: "USDt0",
