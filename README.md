@@ -19,11 +19,15 @@ OKX_FACILITATOR_PASSPHRASE=
 OKX_FACILITATOR_BASE_URL=https://www.okx.com
 
 LLM_API_KEY=
-LLM_BASE_URL=
-LLM_MODEL=
+LLM_BASE_URL=https://router-api.0g.ai/v1
+LLM_MODEL=qwen3.7-max
+LLM_TRUST_MODE=verified
 ```
 
 `OPENAI_API_KEY` is also supported as a fallback for `LLM_API_KEY`.
+
+For 0G, `https://pc.0g.ai/` is the portal/dashboard. The OpenAI-compatible
+router API base is `https://router-api.0g.ai/v1`.
 
 ## Vercel
 

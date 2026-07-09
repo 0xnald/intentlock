@@ -31,6 +31,10 @@ function model() {
   return process.env.LLM_MODEL || "gpt-4o-mini";
 }
 
+function trustMode() {
+  return process.env.LLM_TRUST_MODE;
+}
+
 function extractJson(content: string) {
   const trimmed = content.trim();
   if (trimmed.startsWith("{")) {
@@ -57,12 +61,18 @@ export async function enrichMandateWithLlm(input: CreateMandateInput): Promise<P
     }
   ];
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${key}`
+  };
+  const selectedTrustMode = trustMode();
+  if (selectedTrustMode) {
+    headers["X-0G-Provider-Trust-Mode"] = selectedTrustMode;
+  }
+
   const response = await fetch(`${baseUrl()}/chat/completions`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`
-    },
+    headers,
     body: JSON.stringify({
       model: model(),
       messages,
