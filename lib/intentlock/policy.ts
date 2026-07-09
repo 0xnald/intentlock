@@ -1,4 +1,5 @@
 import { getMandate, listReceipts, saveMandate, saveReceipt } from "./store";
+import { enrichMandateWithLlm } from "./llm";
 import type {
   ActionInput,
   CreateMandateInput,
@@ -42,27 +43,32 @@ function remainingBudget(mandate: Mandate) {
 }
 
 export async function createMandate(input: CreateMandateInput) {
+  const llmMandate = await enrichMandateWithLlm(input);
+  const enrichedInput = {
+    ...llmMandate,
+    ...input
+  };
   const createdAt = now();
   const mandate: Mandate = {
     id: id("mandate"),
-    userIntent: input.userIntent,
-    agent: input.agent ?? "Agent",
-    objective: input.objective ?? input.userIntent,
-    currency: input.currency ?? "USDt",
-    maxBudget: input.maxBudget ?? 30,
-    maxPerCall: input.maxPerCall ?? 1,
-    allowedProviders: normalizeList(input.allowedProviders, []),
-    blockedActions: normalizeList(input.blockedActions, [
+    userIntent: enrichedInput.userIntent,
+    agent: enrichedInput.agent ?? "Agent",
+    objective: enrichedInput.objective ?? enrichedInput.userIntent,
+    currency: enrichedInput.currency ?? "USDt",
+    maxBudget: enrichedInput.maxBudget ?? 30,
+    maxPerCall: enrichedInput.maxPerCall ?? 1,
+    allowedProviders: normalizeList(enrichedInput.allowedProviders, []),
+    blockedActions: normalizeList(enrichedInput.blockedActions, [
       "token purchase",
       "unverified contract",
       "private key",
       "withdraw"
     ]),
-    requireEscrow: input.requireEscrow ?? true,
-    requiredEvidence: normalizeList(input.requiredEvidence, ["receipts", "conversation logs"]),
-    acceptanceCriteria: normalizeList(input.acceptanceCriteria, ["clear deliverable", "source evidence"]),
-    deadline: input.deadline,
-    maxRevisions: input.maxRevisions ?? 2,
+    requireEscrow: enrichedInput.requireEscrow ?? true,
+    requiredEvidence: normalizeList(enrichedInput.requiredEvidence, ["receipts", "conversation logs"]),
+    acceptanceCriteria: normalizeList(enrichedInput.acceptanceCriteria, ["clear deliverable", "source evidence"]),
+    deadline: enrichedInput.deadline,
+    maxRevisions: enrichedInput.maxRevisions ?? 2,
     spent: 0,
     status: "active",
     createdAt,

@@ -14,6 +14,8 @@ export async function GET() {
     pricePerCall: `$${PRICE_USD}`,
     payTo: PAY_TO,
     endpoint: `${baseUrl}/api/mcp`,
+    llmPowered: true,
+    llmModel: process.env.LLM_MODEL || "configurable",
     tools: [
       "create_mandate",
       "validate_agent_action",
