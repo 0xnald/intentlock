@@ -45,5 +45,5 @@ export const paidToolRoute = {
 } as const;
 
 export function paidPost(handler: (request: NextRequest) => Promise<NextResponse>) {
-  return withX402(handler, paidToolRoute, x402Server, undefined, undefined, false);
+  return withX402(handler, paidToolRoute, x402Server);
 }
