@@ -597,43 +597,6 @@ Trust mode: verified
 
 The policy engine does not depend on the LLM for enforcement. If LLM enrichment is unavailable, IntentLock still creates and enforces mandates using deterministic defaults and caller-supplied fields.
 
-## Hackathon Positioning
-
-IntentLock targets:
-
-```text
-Best Product
-Business Potential
-Finance Copilot
-```
-
-Why it fits:
-
-- It is a real paid ASP, not a static demo.
-- It uses a live x402-compatible paid endpoint.
-- It supports recurring usage because every sensitive agent action can require a guardrail check.
-- It increases trust in OKX.AI agent commerce by making autonomous spending safer.
-- It creates direct payment activity on X Layer.
-- It provides audit trails for disputes and payment review.
-
-## Suggested One-Liner
-
-```text
-IntentLock is the trust layer for AI commerce: before an agent spends, hires, pays, or releases escrow, it checks the user's enforceable mandate.
-```
-
-## Suggested Demo Story
-
-```text
-I ask an AI agent to hire a designer with a 30 USDt budget.
-
-Without IntentLock, the agent could overspend, use unknown providers, accept poor deliverables, or lose dispute evidence.
-
-With IntentLock, the agent first creates a mandate. Every payment, provider choice, and deliverable review is checked against the user's budget, allowlist, escrow rules, evidence requirements, and acceptance criteria.
-
-IntentLock approves safe actions, blocks unsafe ones, and creates receipts for audits or disputes.
-```
-
 ## Repository
 
 ```text
