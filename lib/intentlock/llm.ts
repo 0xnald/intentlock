@@ -70,26 +70,31 @@ export async function enrichMandateWithLlm(input: CreateMandateInput): Promise<P
     headers["X-0G-Provider-Trust-Mode"] = selectedTrustMode;
   }
 
-  const response = await fetch(`${baseUrl()}/chat/completions`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      model: model(),
-      messages,
-      temperature: 0.2
-    })
-  });
+  try {
+    const response = await fetch(`${baseUrl()}/chat/completions`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: model(),
+        messages,
+        temperature: 0.2
+      })
+    });
 
-  if (!response.ok) {
-    throw new Error(`LLM mandate generation failed: ${response.status} ${response.statusText}`);
-  }
+    if (!response.ok) {
+      console.warn(`LLM mandate generation failed: ${response.status} ${response.statusText}`);
+      return null;
+    }
 
-  const data = (await response.json()) as ChatResponse;
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) {
+    const data = (await response.json()) as ChatResponse;
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      return null;
+    }
+
+    return JSON.parse(extractJson(content)) as Partial<CreateMandateInput>;
+  } catch (error) {
+    console.warn("LLM mandate generation unavailable.", error);
     return null;
   }
-
-  const parsed = JSON.parse(extractJson(content)) as Partial<CreateMandateInput>;
-  return parsed;
 }

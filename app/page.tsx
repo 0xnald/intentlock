@@ -1,3 +1,5 @@
+import { LiveProof } from "./live-proof";
+
 const approvedJson = `{
   "decision": "approved",
   "reason": "Provider is allowlisted, request is within max-per-call, and budget remains.",
@@ -44,6 +46,9 @@ export default function Home() {
               </a>
               <a className="button secondary" href="#api">
                 Inspect tools
+              </a>
+              <a className="button secondary" href="#proof">
+                Run live proof
               </a>
             </div>
           </div>
@@ -94,6 +99,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <LiveProof />
 
       <section className="band" id="api">
         <div className="shell tool-grid">
