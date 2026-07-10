@@ -503,6 +503,7 @@ LLM_API_KEY=
 LLM_BASE_URL=https://router-api.0g.ai/v1
 LLM_MODEL=qwen3.7-max
 LLM_TRUST_MODE=verified
+LLM_TIMEOUT_MS=45000
 ```
 
 Notes:
@@ -539,6 +540,7 @@ LLM_API_KEY
 LLM_BASE_URL
 LLM_MODEL
 LLM_TRUST_MODE
+LLM_TIMEOUT_MS
 ```
 
 After deployment, verify:

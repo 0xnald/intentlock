@@ -14,8 +14,52 @@ const now = () => new Date().toISOString();
 
 const id = (prefix: string) => `${prefix}_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
 
-function normalizeList(values: string[] | undefined, fallback: string[]) {
-  return values?.map((value) => value.trim()).filter(Boolean) ?? fallback;
+function normalizeList(values: unknown, fallback: string[]) {
+  if (Array.isArray(values)) {
+    const normalized = values
+      .map((value) => String(value).trim())
+      .filter(Boolean);
+    return normalized.length > 0 ? normalized : fallback;
+  }
+
+  if (typeof values === "string") {
+    const normalized = values
+      .split(/[,;\n]/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+    return normalized.length > 0 ? normalized : fallback;
+  }
+
+  return fallback;
+}
+
+function normalizeNumber(value: unknown, fallback: number) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value.replace(/[^0-9.]/g, ""));
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return fallback;
+}
+
+function normalizeBoolean(value: unknown, fallback: boolean) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.toLowerCase();
+    if (["true", "yes", "required"].includes(normalized)) {
+      return true;
+    }
+    if (["false", "no", "not required"].includes(normalized)) {
+      return false;
+    }
+  }
+  return fallback;
 }
 
 function receipt(input: Omit<Receipt, "id" | "createdAt">): Receipt {
@@ -55,8 +99,8 @@ export async function createMandate(input: CreateMandateInput) {
     agent: enrichedInput.agent ?? "Agent",
     objective: enrichedInput.objective ?? enrichedInput.userIntent,
     currency: enrichedInput.currency ?? "USDt",
-    maxBudget: enrichedInput.maxBudget ?? 30,
-    maxPerCall: enrichedInput.maxPerCall ?? 1,
+    maxBudget: normalizeNumber(enrichedInput.maxBudget, 30),
+    maxPerCall: normalizeNumber(enrichedInput.maxPerCall, 1),
     allowedProviders: normalizeList(enrichedInput.allowedProviders, []),
     blockedActions: normalizeList(enrichedInput.blockedActions, [
       "token purchase",
@@ -64,11 +108,11 @@ export async function createMandate(input: CreateMandateInput) {
       "private key",
       "withdraw"
     ]),
-    requireEscrow: enrichedInput.requireEscrow ?? true,
+    requireEscrow: normalizeBoolean(enrichedInput.requireEscrow, true),
     requiredEvidence: normalizeList(enrichedInput.requiredEvidence, ["receipts", "conversation logs"]),
     acceptanceCriteria: normalizeList(enrichedInput.acceptanceCriteria, ["clear deliverable", "source evidence"]),
     deadline: enrichedInput.deadline,
-    maxRevisions: enrichedInput.maxRevisions ?? 2,
+    maxRevisions: Math.trunc(normalizeNumber(enrichedInput.maxRevisions, 2)),
     spent: 0,
     status: "active",
     createdAt,

@@ -7,14 +7,37 @@ import {
   validateAgentAction
 } from "../lib/intentlock/policy";
 
+process.env.LLM_API_KEY = "test-key";
+process.env.LLM_BASE_URL = "https://llm.test/v1";
+process.env.LLM_MODEL = "test-model";
+
+globalThis.fetch = async () =>
+  new Response(
+    JSON.stringify({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              objective: "Hire a logo designer with a strict budget and escrow evidence.",
+              maxBudget: 30,
+              maxPerCall: 5,
+              allowedProviders: ["TopLogoASP"],
+              blockedActions: ["unverified contract", "private key", "withdraw"],
+              requireEscrow: true,
+              requiredEvidence: ["receipts", "source files"],
+              acceptanceCriteria: ["PNG", "SVG", "source files"],
+              maxRevisions: 2
+            })
+          }
+        }
+      ]
+    }),
+    { status: 200, headers: { "content-type": "application/json" } }
+  );
+
 const mandate = await createMandate({
   userIntent: "Hire a logo designer with a strict budget and escrow evidence.",
-  agent: "DesignBuyer",
-  maxBudget: 30,
-  maxPerCall: 5,
-  allowedProviders: ["TopLogoASP"],
-  requiredEvidence: ["receipts", "source files"],
-  acceptanceCriteria: ["PNG", "SVG", "source files"]
+  agent: "DesignBuyer"
 });
 
 const approved = await checkPaymentRequest({

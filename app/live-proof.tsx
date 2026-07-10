@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type ProofResult = {
   mandate?: {
@@ -35,11 +35,27 @@ export function LiveProof() {
   const [raw, setRaw] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState("");
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!isRunning) {
+      return;
+    }
+
+    const startedAt = Date.now();
+    setElapsedSeconds(0);
+    const interval = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 500);
+
+    return () => window.clearInterval(interval);
+  }, [isRunning]);
 
   async function runProof() {
     setIsRunning(true);
     setError("");
     setRaw("");
+    setResult(null);
 
     try {
       const response = await fetch("/api/demo/intentlock", {
@@ -79,6 +95,12 @@ export function LiveProof() {
           <button className="button proof-button" type="button" onClick={runProof} disabled={isRunning}>
             {isRunning ? "Running..." : "Run live proof"}
           </button>
+          {isRunning ? (
+            <p className="proof-status">
+              Calling the configured LLM, generating a mandate, then running policy checks.
+              Elapsed: {elapsedSeconds}s.
+            </p>
+          ) : null}
           {error ? <p className="error-text">{error}</p> : null}
         </div>
 

@@ -19,6 +19,8 @@ Return only valid JSON with these fields:
 objective, maxBudget, maxPerCall, allowedProviders, blockedActions, requireEscrow, requiredEvidence, acceptanceCriteria, deadline, maxRevisions.
 Use conservative payment limits, require evidence, and block unsafe financial actions.`;
 
+const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS ?? 45000);
+
 function apiKey() {
   return process.env.LLM_API_KEY ?? process.env.OPENAI_API_KEY;
 }
@@ -47,7 +49,7 @@ function extractJson(content: string) {
 export async function enrichMandateWithLlm(input: CreateMandateInput): Promise<Partial<CreateMandateInput> | null> {
   const key = apiKey();
   if (!key) {
-    return null;
+    throw new Error("LLM_API_KEY or OPENAI_API_KEY is required for mandate generation.");
   }
 
   const messages: ChatMessage[] = [
@@ -70,10 +72,14 @@ export async function enrichMandateWithLlm(input: CreateMandateInput): Promise<P
     headers["X-0G-Provider-Trust-Mode"] = selectedTrustMode;
   }
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${baseUrl()}/chat/completions`, {
       method: "POST",
       headers,
+      signal: controller.signal,
       body: JSON.stringify({
         model: model(),
         messages,
@@ -82,19 +88,22 @@ export async function enrichMandateWithLlm(input: CreateMandateInput): Promise<P
     });
 
     if (!response.ok) {
-      console.warn(`LLM mandate generation failed: ${response.status} ${response.statusText}`);
-      return null;
+      throw new Error(`LLM mandate generation failed: ${response.status} ${response.statusText}`);
     }
 
     const data = (await response.json()) as ChatResponse;
     const content = data.choices?.[0]?.message?.content;
     if (!content) {
-      return null;
+      throw new Error("LLM mandate generation returned no content.");
     }
 
     return JSON.parse(extractJson(content)) as Partial<CreateMandateInput>;
   } catch (error) {
-    console.warn("LLM mandate generation unavailable.", error);
-    return null;
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`LLM mandate generation timed out after ${LLM_TIMEOUT_MS}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
