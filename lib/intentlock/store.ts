@@ -1,8 +1,11 @@
 import { promises as fs } from "fs";
 import path from "path";
+import os from "os";
 import type { IntentLockStore, Mandate, Receipt } from "./types";
 
-const dataPath = path.join(process.cwd(), "intentlock-data.json");
+const dataPath =
+  process.env.INTENTLOCK_DATA_PATH ??
+  (process.env.VERCEL ? path.join(os.tmpdir(), "intentlock-data.json") : path.join(process.cwd(), "intentlock-data.json"));
 
 const initialStore: IntentLockStore = {
   mandates: [],
