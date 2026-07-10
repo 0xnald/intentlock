@@ -1,4 +1,5 @@
 import { LiveProof } from "./live-proof";
+import { ScrollLink } from "./scroll-link";
 
 const approvedJson = `{
   "decision": "approved",
@@ -25,9 +26,9 @@ export default function Home() {
             IntentLock
           </a>
           <div className="nav-links">
-            <a href="#mcp">A2MCP</a>
-            <a href="#features">Guardrails</a>
-            <a href="#api">Tools</a>
+            <ScrollLink targetId="mcp">A2MCP</ScrollLink>
+            <ScrollLink targetId="features">Guardrails</ScrollLink>
+            <ScrollLink targetId="api">Tools</ScrollLink>
           </div>
         </nav>
 
@@ -44,12 +45,12 @@ export default function Home() {
               <a className="button" href="/api/manifest">
                 View ASP manifest
               </a>
-              <a className="button secondary" href="#api">
+              <ScrollLink className="button secondary" targetId="api">
                 Inspect tools
-              </a>
-              <a className="button secondary" href="#proof">
+              </ScrollLink>
+              <ScrollLink className="button secondary" targetId="proof">
                 Run live proof
-              </a>
+              </ScrollLink>
             </div>
           </div>
 
