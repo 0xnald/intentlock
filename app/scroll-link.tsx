@@ -2,14 +2,15 @@
 
 type ScrollLinkProps = {
   targetId: string;
+  path: string;
   children: React.ReactNode;
   className?: string;
 };
 
-export function ScrollLink({ targetId, children, className }: ScrollLinkProps) {
+export function ScrollLink({ targetId, path, children, className }: ScrollLinkProps) {
   function scrollToTarget() {
     document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    window.history.replaceState(null, "", window.location.pathname);
+    window.history.pushState(null, "", path);
   }
 
   return (
