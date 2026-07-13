@@ -36,7 +36,7 @@ export const paidToolRoute = {
     },
     maxTimeoutSeconds: 300,
     extra: {
-      name: "USDt0",
+      name: "USD₮0",
       version: "1"
     }
   },
@@ -44,6 +44,15 @@ export const paidToolRoute = {
   mimeType: "application/json"
 } as const;
 
+function noStore(response: NextResponse) {
+  response.headers.set("Cache-Control", "no-store");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
+}
+
 export function paidPost(handler: (request: NextRequest) => Promise<NextResponse>) {
-  return withX402(handler, paidToolRoute, x402Server);
+  const protectedHandler = withX402(handler, paidToolRoute, x402Server);
+
+  return async (request: NextRequest) => noStore(await protectedHandler(request));
 }
