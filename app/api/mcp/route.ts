@@ -28,6 +28,13 @@ type JsonRpcRequest = {
   };
 };
 
+const toolsListResponse = (id: JsonRpcRequest["id"] = null) =>
+  json({
+    jsonrpc: "2.0",
+    id: id ?? null,
+    result: { tools }
+  });
+
 const tools = [
   {
     name: "create_mandate",
@@ -157,8 +164,37 @@ async function callTool(name: string, args: unknown) {
   }
 }
 
+async function readMessage(request: NextRequest) {
+  const rawBody = await request.text();
+
+  if (!rawBody.trim()) {
+    return { id: null, method: "tools/list" } satisfies JsonRpcRequest;
+  }
+
+  try {
+    const message = JSON.parse(rawBody) as JsonRpcRequest;
+    if (!message.method) {
+      return { ...message, method: "tools/list" } satisfies JsonRpcRequest;
+    }
+    return message;
+  } catch {
+    return null;
+  }
+}
+
 async function handler(request: NextRequest) {
-  const message = (await request.json()) as JsonRpcRequest;
+  const message = await readMessage(request);
+
+  if (!message) {
+    return json({
+      jsonrpc: "2.0",
+      id: null,
+      error: {
+        code: -32700,
+        message: "Invalid JSON-RPC request."
+      }
+    });
+  }
 
   if (message.method === "initialize") {
     return json({
@@ -176,11 +212,7 @@ async function handler(request: NextRequest) {
   }
 
   if (message.method === "tools/list") {
-    return json({
-      jsonrpc: "2.0",
-      id: message.id ?? null,
-      result: { tools }
-    });
+    return toolsListResponse(message.id);
   }
 
   if (message.method === "tools/call") {
