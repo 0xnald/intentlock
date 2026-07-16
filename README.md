@@ -29,10 +29,10 @@ Registration transaction: 0x22b5610199f8fd988c14f63145c78c8bda18af47a1c922af4404
 Live deployment:
 
 ```text
-App: https://intentlock.vercel.app
-Health: https://intentlock.vercel.app/api/health
-Manifest: https://intentlock.vercel.app/api/manifest
-A2MCP endpoint: https://intentlock.vercel.app/api/mcp
+App: https://intentlock.fun
+Health: https://intentlock.fun/api/health
+Manifest: https://intentlock.fun/api/manifest
+A2MCP endpoint: https://intentlock.fun/api/mcp
 ```
 
 ## Why IntentLock Exists
@@ -134,7 +134,7 @@ The registered OKX.AI service is:
 Service name: Intent Guardrail API
 Type: API service
 Fee: 0.01 USDT
-Endpoint: https://intentlock.vercel.app/api/mcp
+Endpoint: https://intentlock.fun/api/mcp
 Description:
 Enforces user mandates before an agent spends money, hires providers, calls paid services, releases escrow, or evaluates deliverables.
 
@@ -290,7 +290,7 @@ Public health check for deployment and registration validation.
 Live:
 
 ```text
-https://intentlock.vercel.app/api/health
+https://intentlock.fun/api/health
 ```
 
 Returns service name, network, receiving wallet, and displayed price.
@@ -302,7 +302,7 @@ Public registration metadata for humans, reviewers, and marketplace checks.
 Live:
 
 ```text
-https://intentlock.vercel.app/api/manifest
+https://intentlock.fun/api/manifest
 ```
 
 Includes name, tagline, description, service type, network, price, payment address, MCP endpoint, LLM status, tools, and target categories.
@@ -314,7 +314,7 @@ Public metadata for the MCP endpoint. This exists so reviewers can open the endp
 Live:
 
 ```text
-https://intentlock.vercel.app/api/mcp
+https://intentlock.fun/api/mcp
 ```
 
 Returns:
@@ -339,7 +339,7 @@ Unauthenticated/unpaid requests return `402 Payment Required` with an x402 `Paym
 Verified live behavior:
 
 ```text
-POST https://intentlock.vercel.app/api/mcp
+POST https://intentlock.fun/api/mcp
 Status: 402 Payment Required
 Payment protocol: x402
 Network: eip155:196
@@ -487,7 +487,7 @@ pnpm build
 Set these locally in `.env.local` and in Vercel project environment variables.
 
 ```env
-INTENTLOCK_BASE_URL=https://intentlock.vercel.app
+INTENTLOCK_BASE_URL=https://intentlock.fun
 INTENTLOCK_PAY_TO=0xec78b1F51adf01bE5D94973c203a40cb4A5f847D
 INTENTLOCK_PRICE_USD=0.01
 INTENTLOCK_PRICE_AMOUNT=10000
@@ -546,9 +546,9 @@ LLM_TIMEOUT_MS
 After deployment, verify:
 
 ```text
-https://intentlock.vercel.app/api/health
-https://intentlock.vercel.app/api/manifest
-https://intentlock.vercel.app/api/mcp
+https://intentlock.fun/api/health
+https://intentlock.fun/api/manifest
+https://intentlock.fun/api/mcp
 ```
 
 Then verify that a `POST` request to `/api/mcp` returns `402 Payment Required` when no payment is attached.
@@ -571,7 +571,7 @@ GET  /api/intentlock/list-receipts?mandateId=...
 These routes use the same policy engine as the MCP tools. The OKX.AI registered endpoint remains:
 
 ```text
-https://intentlock.vercel.app/api/mcp
+https://intentlock.fun/api/mcp
 ```
 
 ## Data Storage
@@ -604,3 +604,4 @@ The policy engine does not depend on the LLM for enforcement. If LLM enrichment 
 ```text
 https://github.com/0xnald/intentlock
 ```
+
