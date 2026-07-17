@@ -41,7 +41,38 @@ export const paidToolRoute = {
     }
   },
   description: "IntentLock paid A2MCP tool call",
-  mimeType: "application/json"
+  mimeType: "application/json",
+  extensions: {
+    outputSchema: {
+      input: {
+        type: "http",
+        method: "POST",
+        bodyType: "json",
+        body: {
+          type: "object",
+          required: ["userIntent"],
+          properties: {
+            userIntent: {
+              type: "string",
+              description: "The user's natural-language task or commerce intent to turn into a mandate."
+            },
+            agent: { type: "string" },
+            objective: { type: "string" },
+            currency: { type: "string", enum: ["USDt", "OKB", "USD"] },
+            maxBudget: { type: "number" },
+            maxPerCall: { type: "number" },
+            allowedProviders: { type: "array", items: { type: "string" } },
+            blockedActions: { type: "array", items: { type: "string" } },
+            requireEscrow: { type: "boolean" },
+            requiredEvidence: { type: "array", items: { type: "string" } },
+            acceptanceCriteria: { type: "array", items: { type: "string" } },
+            deadline: { type: "string" },
+            maxRevisions: { type: "number" }
+          }
+        }
+      }
+    }
+  }
 } as const;
 
 function noStore(response: NextResponse) {

@@ -27,6 +27,41 @@ type JsonRpcRequest = {
   };
 };
 
+const defaultMandateArgs = {
+  userIntent:
+    "Create a safe mandate for an OKX.AI research agent with a 10 USDT daily budget, 1 USDT max per call, approved providers only, escrow required, and blocked unverified contract interactions.",
+  agent: "ResearchBot",
+  objective: "Create an enforceable OKX.AI agent commerce mandate",
+  currency: "USDt",
+  maxBudget: 10,
+  maxPerCall: 1,
+  allowedProviders: ["approved OKX.AI providers"],
+  blockedActions: ["unverified contract interactions", "private key requests", "withdrawals", "token purchases"],
+  requireEscrow: true,
+  requiredEvidence: ["receipts", "conversation logs", "source links"],
+  acceptanceCriteria: [
+    "provider is approved",
+    "cost stays within mandate budget",
+    "no unverified contract interaction is allowed",
+    "final answer includes evidence"
+  ],
+  maxRevisions: 2
+};
+
+const createMandateRequest = (
+  id: JsonRpcRequest["id"],
+  args: Record<string, unknown> = defaultMandateArgs
+) =>
+  ({
+    jsonrpc: "2.0",
+    id: id ?? null,
+    method: "tools/call",
+    params: {
+      name: "create_mandate",
+      arguments: args
+    }
+  }) satisfies JsonRpcRequest;
+
 const toolsListResponse = (id: JsonRpcRequest["id"] = null) =>
   json({
     jsonrpc: "2.0",
@@ -167,12 +202,18 @@ async function readMessage(request: NextRequest) {
   const rawBody = await request.text();
 
   if (!rawBody.trim()) {
+    if (request.method === "POST") {
+      return createMandateRequest(null);
+    }
     return { id: null, method: "tools/list" } satisfies JsonRpcRequest;
   }
 
   try {
-    const message = JSON.parse(rawBody) as JsonRpcRequest;
+    const message = JSON.parse(rawBody) as JsonRpcRequest & Record<string, unknown>;
     if (!message.method) {
+      if (request.method === "POST" && typeof message.userIntent === "string") {
+        return createMandateRequest(message.id, message as Record<string, unknown>);
+      }
       return { ...message, method: "tools/list" } satisfies JsonRpcRequest;
     }
     return message;

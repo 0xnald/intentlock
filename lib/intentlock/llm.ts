@@ -83,7 +83,8 @@ export async function enrichMandateWithLlm(input: CreateMandateInput): Promise<P
       body: JSON.stringify({
         model: model(),
         messages,
-        temperature: 0.2
+        temperature: 0.2,
+        max_tokens: 700
       })
     });
 
