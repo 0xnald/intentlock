@@ -16,7 +16,6 @@ import {
   disputeSchema,
   paymentSchema
 } from "@/lib/intentlock/schemas";
-import { NETWORK, PAY_TO, PRICE_USD, publicBaseUrl } from "@/lib/intentlock/config";
 
 type JsonRpcRequest = {
   jsonrpc?: "2.0";
@@ -257,27 +256,5 @@ async function handler(request: NextRequest) {
   });
 }
 
+export const GET = paidPost(handler);
 export const POST = paidPost(handler);
-
-export async function GET() {
-  const baseUrl = publicBaseUrl();
-
-  return json({
-    name: "IntentLock MCP",
-    description:
-      "Paid A2MCP JSON-RPC endpoint for IntentLock. Use POST for initialize, tools/list, and tools/call.",
-    transport: "json-rpc",
-    methods: ["initialize", "tools/list", "tools/call"],
-    postEndpoint: `${baseUrl}/api/mcp`,
-    payment: {
-      protocol: "x402",
-      network: NETWORK,
-      pricePerCall: `$${PRICE_USD}`,
-      payTo: PAY_TO
-    },
-    tools: tools.map((tool) => ({
-      name: tool.name,
-      description: tool.description
-    }))
-  });
-}
