@@ -62,6 +62,20 @@ function normalizeBoolean(value: unknown, fallback: boolean) {
   return fallback;
 }
 
+function normalizeDeadline(value: unknown) {
+  const fallback = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  if (typeof value !== "string" || !value.trim()) {
+    return fallback;
+  }
+
+  const deadline = new Date(value);
+  if (Number.isNaN(deadline.getTime()) || deadline.getTime() <= Date.now()) {
+    return fallback;
+  }
+
+  return deadline.toISOString();
+}
+
 function receipt(input: Omit<Receipt, "id" | "createdAt">): Receipt {
   return {
     ...input,
@@ -111,7 +125,7 @@ export async function createMandate(input: CreateMandateInput) {
     requireEscrow: normalizeBoolean(enrichedInput.requireEscrow, true),
     requiredEvidence: normalizeList(enrichedInput.requiredEvidence, ["receipts", "conversation logs"]),
     acceptanceCriteria: normalizeList(enrichedInput.acceptanceCriteria, ["clear deliverable", "source evidence"]),
-    deadline: enrichedInput.deadline,
+    deadline: normalizeDeadline(enrichedInput.deadline),
     maxRevisions: Math.trunc(normalizeNumber(enrichedInput.maxRevisions, 2)),
     spent: 0,
     status: "active",

@@ -20,6 +20,7 @@ objective, maxBudget, maxPerCall, allowedProviders, blockedActions, requireEscro
 Use conservative payment limits, require evidence, and block unsafe financial actions.`;
 
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS ?? 45000);
+const LLM_MAX_ATTEMPTS = Math.max(1, Number(process.env.LLM_MAX_ATTEMPTS ?? 3));
 
 function apiKey() {
   return process.env.LLM_API_KEY ?? process.env.OPENAI_API_KEY;
@@ -72,39 +73,44 @@ export async function enrichMandateWithLlm(input: CreateMandateInput): Promise<P
     headers["X-0G-Provider-Trust-Mode"] = selectedTrustMode;
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
+  let lastError: unknown;
 
-  try {
-    const response = await fetch(`${baseUrl()}/chat/completions`, {
-      method: "POST",
-      headers,
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: model(),
-        messages,
-        temperature: 0.2,
-        max_tokens: 700
-      })
-    });
+  for (let attempt = 1; attempt <= LLM_MAX_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
 
-    if (!response.ok) {
-      throw new Error(`LLM mandate generation failed: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(`${baseUrl()}/chat/completions`, {
+        method: "POST",
+        headers,
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: model(),
+          messages,
+          temperature: 0.1,
+          max_tokens: 700
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`LLM mandate generation failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as ChatResponse;
+      const content = data.choices?.[0]?.message?.content;
+      if (!content?.trim()) {
+        throw new Error("LLM mandate generation returned no content.");
+      }
+
+      return JSON.parse(extractJson(content)) as Partial<CreateMandateInput>;
+    } catch (error) {
+      lastError = error instanceof Error && error.name === "AbortError"
+        ? new Error(`LLM mandate generation timed out after ${LLM_TIMEOUT_MS}ms.`)
+        : error;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = (await response.json()) as ChatResponse;
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) {
-      throw new Error("LLM mandate generation returned no content.");
-    }
-
-    return JSON.parse(extractJson(content)) as Partial<CreateMandateInput>;
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`LLM mandate generation timed out after ${LLM_TIMEOUT_MS}ms.`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  throw lastError;
 }
