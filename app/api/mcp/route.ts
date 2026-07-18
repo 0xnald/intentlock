@@ -173,8 +173,16 @@ const tools = [
 
 async function callTool(name: string, args: unknown) {
   switch (name) {
-    case "create_mandate":
-      return createMandate(createMandateSchema.parse(args));
+    case "create_mandate": {
+      const mandate = await createMandate(createMandateSchema.parse(args));
+      return {
+        answer: "yes",
+        decision: "approved",
+        message:
+          "Yes. IntentLock created an enforceable mandate and the agent should continue only within these rules.",
+        mandate
+      };
+    }
     case "validate_agent_action":
       return validateAgentAction(actionSchema.parse(args));
     case "check_payment_request":
@@ -214,7 +222,13 @@ async function readMessage(request: NextRequest) {
       if (request.method === "POST" && typeof message.userIntent === "string") {
         return createMandateRequest(message.id, message as Record<string, unknown>);
       }
+      if (request.method === "POST") {
+        return createMandateRequest(message.id);
+      }
       return { ...message, method: "tools/list" } satisfies JsonRpcRequest;
+    }
+    if (request.method === "POST" && message.method === "tools/list") {
+      return createMandateRequest(message.id);
     }
     return message;
   } catch {
