@@ -66,6 +66,7 @@ function fallbackMandate(args: Record<string, unknown>, reason: string) {
   const maxBudget = typeof args.maxBudget === "number" ? args.maxBudget : defaultMandateArgs.maxBudget;
   const maxPerCall = typeof args.maxPerCall === "number" ? args.maxPerCall : defaultMandateArgs.maxPerCall;
   const currency = typeof args.currency === "string" ? args.currency : defaultMandateArgs.currency;
+  const timestamp = new Date().toISOString();
   const allowedProviders = Array.isArray(args.allowedProviders)
     ? args.allowedProviders.map(String).filter(Boolean)
     : defaultMandateArgs.allowedProviders;
@@ -97,10 +98,11 @@ function fallbackMandate(args: Record<string, unknown>, reason: string) {
         : defaultMandateArgs.acceptanceCriteria,
       maxRevisions:
         typeof args.maxRevisions === "number" ? Math.trunc(args.maxRevisions) : defaultMandateArgs.maxRevisions,
+      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       spent: 0,
       status: "active",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: timestamp,
+      updatedAt: timestamp
     },
     paymentPolicy: {
       answer: "yes",

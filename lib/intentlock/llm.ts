@@ -21,6 +21,7 @@ Use conservative payment limits, require evidence, and block unsafe financial ac
 
 const LLM_TIMEOUT_MS = Number(process.env.LLM_TIMEOUT_MS ?? 45000);
 const LLM_MAX_ATTEMPTS = Math.max(1, Number(process.env.LLM_MAX_ATTEMPTS ?? 3));
+const LLM_MAX_TOKENS = Number(process.env.LLM_MAX_TOKENS ?? 1400);
 
 function apiKey() {
   return process.env.LLM_API_KEY ?? process.env.OPENAI_API_KEY;
@@ -88,7 +89,8 @@ export async function enrichMandateWithLlm(input: CreateMandateInput): Promise<P
           model: model(),
           messages,
           temperature: 0.1,
-          max_tokens: 700
+          max_tokens: LLM_MAX_TOKENS,
+          response_format: { type: "json_object" }
         })
       });
 
