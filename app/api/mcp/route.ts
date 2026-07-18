@@ -281,10 +281,7 @@ async function readMessage(request: NextRequest) {
   const rawBody = await request.text();
 
   if (!rawBody.trim()) {
-    if (request.method === "POST") {
-      return createMandateRequest(null);
-    }
-    return { id: null, method: "tools/list" } satisfies JsonRpcRequest;
+    return createMandateRequest(null);
   }
 
   try {
@@ -298,7 +295,7 @@ async function readMessage(request: NextRequest) {
       }
       return { ...message, method: "tools/list" } satisfies JsonRpcRequest;
     }
-    if (request.method === "POST" && message.method === "tools/list") {
+    if (message.method === "tools/list") {
       return createMandateRequest(message.id);
     }
     return message;
