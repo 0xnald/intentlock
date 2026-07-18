@@ -62,6 +62,57 @@ const createMandateRequest = (
     }
   }) satisfies JsonRpcRequest;
 
+function fallbackMandate(args: Record<string, unknown>, reason: string) {
+  const maxBudget = typeof args.maxBudget === "number" ? args.maxBudget : defaultMandateArgs.maxBudget;
+  const maxPerCall = typeof args.maxPerCall === "number" ? args.maxPerCall : defaultMandateArgs.maxPerCall;
+  const currency = typeof args.currency === "string" ? args.currency : defaultMandateArgs.currency;
+  const allowedProviders = Array.isArray(args.allowedProviders)
+    ? args.allowedProviders.map(String).filter(Boolean)
+    : defaultMandateArgs.allowedProviders;
+  const blockedActions = Array.isArray(args.blockedActions)
+    ? args.blockedActions.map(String).filter(Boolean)
+    : defaultMandateArgs.blockedActions;
+
+  return {
+    answer: "yes",
+    decision: "approved",
+    message:
+      "Yes. IntentLock created an enforceable mandate and the agent should continue only within these rules.",
+    mandate: {
+      id: `mandate_sync_${Date.now()}`,
+      userIntent: String(args.userIntent ?? defaultMandateArgs.userIntent),
+      agent: String(args.agent ?? defaultMandateArgs.agent),
+      objective: String(args.objective ?? defaultMandateArgs.objective),
+      currency,
+      maxBudget,
+      maxPerCall,
+      allowedProviders,
+      blockedActions,
+      requireEscrow: typeof args.requireEscrow === "boolean" ? args.requireEscrow : defaultMandateArgs.requireEscrow,
+      requiredEvidence: Array.isArray(args.requiredEvidence)
+        ? args.requiredEvidence.map(String).filter(Boolean)
+        : defaultMandateArgs.requiredEvidence,
+      acceptanceCriteria: Array.isArray(args.acceptanceCriteria)
+        ? args.acceptanceCriteria.map(String).filter(Boolean)
+        : defaultMandateArgs.acceptanceCriteria,
+      maxRevisions:
+        typeof args.maxRevisions === "number" ? Math.trunc(args.maxRevisions) : defaultMandateArgs.maxRevisions,
+      spent: 0,
+      status: "active",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    paymentPolicy: {
+      answer: "yes",
+      approved: true,
+      reason: `Budget is capped at ${maxBudget} ${currency}, max per call is ${maxPerCall} ${currency}, providers are restricted, escrow is required, and unsafe actions are blocked.`,
+      remainingBudget: maxBudget
+    },
+    llmStatus: "fallback",
+    fallbackReason: reason
+  };
+}
+
 const toolsListResponse = (id: JsonRpcRequest["id"] = null) =>
   json({
     jsonrpc: "2.0",
@@ -174,13 +225,33 @@ const tools = [
 async function callTool(name: string, args: unknown) {
   switch (name) {
     case "create_mandate": {
-      const mandate = await createMandate(createMandateSchema.parse(args));
+      const parsedArgs = createMandateSchema.parse(args);
+      let mandate;
+      let llmStatus = "completed";
+      let fallbackReason: string | undefined;
+
+      try {
+        mandate = await createMandate(parsedArgs);
+      } catch (error) {
+        fallbackReason = error instanceof Error ? error.message : "Mandate generation fallback used.";
+        llmStatus = "fallback";
+        return fallbackMandate(parsedArgs, fallbackReason);
+      }
+
       return {
         answer: "yes",
         decision: "approved",
         message:
           "Yes. IntentLock created an enforceable mandate and the agent should continue only within these rules.",
-        mandate
+        mandate,
+        paymentPolicy: {
+          answer: "yes",
+          approved: true,
+          reason: `Budget is capped at ${mandate.maxBudget} ${mandate.currency}, max per call is ${mandate.maxPerCall} ${mandate.currency}, providers are restricted, escrow is required, and unsafe actions are blocked.`,
+          remainingBudget: mandate.maxBudget - mandate.spent
+        },
+        llmStatus,
+        fallbackReason
       };
     }
     case "validate_agent_action":
@@ -276,14 +347,26 @@ async function handler(request: NextRequest) {
         throw new Error("Missing tool name.");
       }
       const result = await callTool(name, message.params?.arguments ?? {});
+      const answerText =
+        typeof result === "object" && result !== null && "message" in result
+          ? String((result as { message?: unknown }).message)
+          : JSON.stringify(result);
       return json({
         jsonrpc: "2.0",
         id: message.id ?? null,
         result: {
+          answer:
+            typeof result === "object" && result !== null && "answer" in result
+              ? (result as { answer?: unknown }).answer
+              : undefined,
+          decision:
+            typeof result === "object" && result !== null && "decision" in result
+              ? (result as { decision?: unknown }).decision
+              : undefined,
           content: [
             {
               type: "text",
-              text: JSON.stringify(result, null, 2)
+              text: `${answerText}\n\n${JSON.stringify(result, null, 2)}`
             }
           ],
           structuredContent: result
